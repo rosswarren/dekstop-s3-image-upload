@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Desktop S3 Image Upload</title>
+    </head>
+    <body>
+        <h1>Desktop S3 Image Upload</h1>
+
+        <ul id='images'></ul>
+
+        <script>
+            var fs = require('fs');
+            var zlib = require('zlib');
+
+            function getFiles(dir, files_) {
+                files_ = files_ || [];
+                var files = fs.readdirSync(dir);
+                for (var i in files){
+                    var name = dir + '/' + files[i];
+                    if (fs.statSync(name).isDirectory()){
+                        //getFiles(name, files_);
+                        //files_.push(name);
+                    } else {
+                        files_.push(name);
+                    }
+                }
+                return files_;
+            }
+
+            var localDirectory = require('remote').require('dialog').showOpenDialog({ properties: [ 'openDirectory' ]});
+
+            var imagesElement = document.getElementById('images');
+
+            getFiles(localDirectory[0]).forEach(function(file) {
+                if (file.toLowerCase().endsWith('jpg')) {
+                    var gzip = zlib.createGzip();
+                    var inp = fs.createReadStream(file);
+                    var out = fs.createWriteStream(file + '.gz');
+                    inp.pipe(gzip).pipe(out);
+
+                    var listElement = document.createElement('li');
+                    imagesElement.appendChild(listElement);
+
+                    var paragraphElement = document.createElement('p');
+                    paragraphElement.innerText = file;
+
+                    listElement.appendChild(paragraphElement);
+
+                    var imageElement = document.createElement('img');
+                    imageElement.src = file;
+                    imageElement.style.width = '100px';
+                    imageElement.style.height = 'auto';
+
+                    listElement.appendChild(imageElement);
+                }
+            });
+        </script>
+    </body>
+</html>
